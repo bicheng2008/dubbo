@@ -30,10 +30,12 @@ import static java.lang.reflect.Array.getLength;
 import static java.util.stream.Stream.of;
 import static org.apache.dubbo.common.utils.AnnotationUtils.findAnnotation;
 import static org.apache.dubbo.common.utils.AnnotationUtils.findMetaAnnotation;
+import static org.apache.dubbo.common.utils.AnnotationUtils.getAllDeclaredAnnotations;
 import static org.apache.dubbo.common.utils.AnnotationUtils.getAttribute;
 import static org.apache.dubbo.common.utils.AnnotationUtils.isAnnotationPresent;
 import static org.apache.dubbo.common.utils.ArrayUtils.isEmpty;
 import static org.apache.dubbo.common.utils.ArrayUtils.isNotEmpty;
+import static org.apache.dubbo.common.utils.CollectionUtils.first;
 import static org.apache.dubbo.common.utils.HttpUtils.buildPath;
 import static org.apache.dubbo.metadata.rest.RestMetadataConstants.SPRING_MVC.CONTROLLER_ANNOTATION_CLASS_NAME;
 import static org.apache.dubbo.metadata.rest.RestMetadataConstants.SPRING_MVC.REQUEST_MAPPING_ANNOTATION_CLASS_NAME;
@@ -54,18 +56,11 @@ public class SpringMvcServiceRestMetadataResolver extends AbstractServiceRestMet
 
     @Override
     protected boolean isRestCapableMethod(Method serviceMethod, Class<?> serviceType, Class<?> serviceInterfaceClass) {
-        return isAnnotationPresent(serviceType, REQUEST_MAPPING_ANNOTATION_CLASS_NAME);
+        return isAnnotationPresent(serviceMethod, REQUEST_MAPPING_ANNOTATION_CLASS_NAME);
     }
 
     @Override
     protected String resolveRequestMethod(Method serviceMethod, Class<?> serviceType, Class<?> serviceInterfaceClass) {
-        String requestBasePath = resolveRequestPath(serviceType);
-        String requestRelativePath = resolveRequestPath(serviceMethod);
-        return buildPath(requestBasePath, requestRelativePath);
-    }
-
-    @Override
-    protected String resolveRequestPath(Method serviceMethod, Class<?> serviceType, Class<?> serviceInterfaceClass) {
         Annotation requestMapping = getRequestMapping(serviceMethod);
 
         // httpMethod is an array of RequestMethod
@@ -77,6 +72,13 @@ public class SpringMvcServiceRestMetadataResolver extends AbstractServiceRestMet
 
         // TODO Is is required to support more request methods?
         return valueOf(Array.get(httpMethod, FIRST_ELEMENT_INDEX));
+    }
+
+    @Override
+    protected String resolveRequestPath(Method serviceMethod, Class<?> serviceType, Class<?> serviceInterfaceClass) {
+        String requestBasePath = resolveRequestPath(serviceType);
+        String requestRelativePath = resolveRequestPath(serviceMethod);
+        return buildPath(requestBasePath, requestRelativePath);
     }
 
     @Override
@@ -119,10 +121,17 @@ public class SpringMvcServiceRestMetadataResolver extends AbstractServiceRestMet
     private Annotation getRequestMapping(AnnotatedElement annotatedElement) {
         // try "@RequestMapping" first
         Annotation requestMapping = findAnnotation(annotatedElement, REQUEST_MAPPING_ANNOTATION_CLASS_NAME);
+
         // try the annotation meta-annotated later
+        if (requestMapping == null) {
+            requestMapping = first(getAllDeclaredAnnotations(annotatedElement,
+                    annotation -> findAnnotation(annotation.annotationType(), REQUEST_MAPPING_ANNOTATION_CLASS_NAME) != null));
+        }
+
         if (requestMapping == null) {
             requestMapping = findMetaAnnotation(annotatedElement, REQUEST_MAPPING_ANNOTATION_CLASS_NAME);
         }
+
         return requestMapping;
     }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.dubbo.metadata.rest.resolver.jaxrs;
+package org.apache.dubbo.metadata.rest.jaxrs;
 
 import org.apache.dubbo.metadata.rest.ClassPathServiceRestMetadataReader;
 import org.apache.dubbo.metadata.rest.DefaultRestService;
@@ -23,7 +23,6 @@ import org.apache.dubbo.metadata.rest.RestService;
 import org.apache.dubbo.metadata.rest.ServiceRestMetadata;
 import org.apache.dubbo.metadata.rest.SpringRestService;
 import org.apache.dubbo.metadata.rest.StandardRestService;
-import org.apache.dubbo.metadata.rest.jaxrs.JAXRSServiceRestMetadataResolver;
 
 import org.junit.jupiter.api.Test;
 
